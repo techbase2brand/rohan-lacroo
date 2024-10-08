@@ -1,4 +1,4 @@
-import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../../utils';
@@ -20,6 +20,7 @@ import DiaryItem from '../../components/DiaryItem';
 import CreateDocketModal from '../../components/modal/CreateDocketModal';
 import MaterialReceiptModal from '../../components/modal/MaterialReceiptModal';
 import SubcontractorDocketModal from '../../components/modal/SubcontractorDocketModal';
+import DocumentPicker from 'react-native-document-picker';
 const { flex, alignItemsCenter, justifyContentCenter, alignJustifyCenter, flexDirectionRow, justifyContentSpaceEvenly } = BaseStyle;
 const CreateDailyDiary = ({ navigation }) => {
     const [activityModalVisible, setActivityModalVisible] = useState(false);
@@ -27,6 +28,7 @@ const CreateDailyDiary = ({ navigation }) => {
     const [materialModalVisible, setMaterialModalVisible] = useState(false);
     const [contractModalVisible, setContractModalVisible] = useState(false);
     const [images, setImages] = useState(Array(5).fill(null));
+    const [files, setFiles] = useState([]);
     const weatherData = [
         { id: '1', temperature: 10, condition: 'Overcast Clouds', time: '6 AM' },
         { id: '2', temperature: 15, condition: 'Clear Sky', time: '9 AM' },
@@ -103,14 +105,14 @@ const CreateDailyDiary = ({ navigation }) => {
             ACTUAL_RATE: "4.8",
         }
     ];
-    const fileData = [
-        {
-            fileName: "File Name.doc"
-        },
-        {
-            fileName: "File Name.csv"
-        }
-    ]
+    // const fileData = [
+    //     {
+    //         fileName: "File Name.doc"
+    //     },
+    //     {
+    //         fileName: "File Name.csv"
+    //     }
+    // ]
     const materialData = [
         {
             ITEM_DESCRIPTION: "Concrete",
@@ -188,7 +190,7 @@ const CreateDailyDiary = ({ navigation }) => {
         // Check for an available slot
         const emptyIndex = images.findIndex((img) => img === null);
         if (emptyIndex === -1) {
-            Alert.alert("Limit reached", "You can only add up to 10 images.");
+            Alert.alert("Limit reached", "You can only add up to 5 images.");
             return;
         }
 
@@ -266,11 +268,42 @@ const CreateDailyDiary = ({ navigation }) => {
         setContractModalVisible(false);
     };
 
+    const handleAddFile = async () => {
+        try {
+            const res = await DocumentPicker.pick({
+                type: [DocumentPicker.types.allFiles],
+            });
+
+            // Log the entire response
+            console.log('DocumentPicker Response:', res);
+
+            // Extracting the uri from the first object in the array
+            const fileUri = res[0].fileCopyUri || res[0].uri; // Accessing the first item in the array
+            console.log('Picked file URI:', fileUri); // This should now show the correct URI
+
+            if (fileUri) {
+                setFiles((prevFiles) => [...prevFiles, { name: res[0].name, uri: fileUri }]);
+            } else {
+                console.error('File URI is undefined');
+            }
+        } catch (err) {
+            if (DocumentPicker.isCancel(err)) {
+                console.log('User cancelled the picker');
+            } else {
+                console.error('Error picking file:', err);
+            }
+        }
+    };
+
+    const deleteFile = (index) => {
+        setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    };
+
     return (
         <View style={[flex, flexDirectionRow]}>
             <SideMenu />
             <View style={styles.container}>
-                <ScrollView style={{ marginBottom: 100 }} showsVerticalScrollIndicator={false}>
+                <ScrollView style={{ marginBottom: hp(15) }} showsVerticalScrollIndicator={false}>
                     <Header screenRouteName={DIARY} screenName={CREATE_DAILY_DIARY} showRoute={true} navigation={navigation} />
                     <View style={styles.prestartBox}>
                         <View style={styles.line}></View>
@@ -405,10 +438,10 @@ const CreateDailyDiary = ({ navigation }) => {
 
                         {/* MATERIAL_RECEIPTS */}
                         <View style={[{ width: "100%", height: hp(6), marginBottom: spacings.large }, justifyContentSpaceEvenly, flexDirectionRow]}>
-                            <View style={[{ width: "77%", height: "100%" }, justifyContentCenter]}>
+                            <View style={[{ width: "80%", height: "100%" }, justifyContentCenter]}>
                                 <Text style={styles.text}>{MATERIAL_RECEIPTS}</Text>
                             </View>
-                            <View style={[{ width: "23%", height: "100%" }, justifyContentCenter]}>
+                            <View style={[{ width: "18%", height: "100%" }, justifyContentCenter]}>
                                 <Button
                                     buttonText={CREATE_MATERIAL_RECEIPTS}
                                     buttonStyle={styles.buttonStyle}
@@ -451,10 +484,10 @@ const CreateDailyDiary = ({ navigation }) => {
 
                         {/* SubContractor */}
                         <View style={[{ width: "100%", height: hp(6), marginBottom: spacings.large }, justifyContentSpaceEvenly, flexDirectionRow]}>
-                            <View style={[{ width: "77%", height: "100%" }, justifyContentCenter]}>
+                            <View style={[{ width: "80%", height: "100%" }, justifyContentCenter]}>
                                 <Text style={styles.text}>{SUBNTRACTOR_DOCKET}</Text>
                             </View>
-                            <View style={[{ width: "23%", height: "100%" }, justifyContentCenter]}>
+                            <View style={[{ width: "20%", height: "100%" }, justifyContentCenter]}>
                                 <Button
                                     buttonText={CREATE_SUBNTRACTOR_DOCKET}
                                     buttonStyle={styles.buttonStyle}
@@ -533,7 +566,7 @@ const CreateDailyDiary = ({ navigation }) => {
                                     buttonStyle={styles.buttonStyle}
                                     buttonTextStyle={styles.buttonTextStyle}
                                     imageSource={ADD_IMAGE_ICON}
-
+                                    onPress={handleAddImage}
                                 />
                             </View>
                         </View>
@@ -559,7 +592,7 @@ const CreateDailyDiary = ({ navigation }) => {
                                     buttonStyle={styles.buttonStyle}
                                     buttonTextStyle={styles.buttonTextStyle}
                                     imageSource={ADD_FILE_BLACK_ICON}
-
+                                    onPress={handleAddFile}
                                 />
                             </View>
                         </View>
@@ -568,7 +601,7 @@ const CreateDailyDiary = ({ navigation }) => {
                                 <Text style={styles.text}>{FILE_NAME}</Text>
                             </View>
                         </View>
-                        <PreStartItem data={fileData} from={"Files"} />
+                        <DiaryItem data={files} from={"Files"} onDeleteFile={deleteFile} />
                     </View>
                 </ScrollView>
                 <View style={{ width: wp(95), height: hp(10), position: "absolute", bottom: 30, flexDirection: "row", justifyContent: "space-evenly", alignItems: "center", paddingVertical: spacings.large, backgroundColor: "#fff" }}>
@@ -687,7 +720,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#D9D9D9',
         borderColor: '#aaa',
         borderWidth: 1,
-        margin: spacings.large
+        // margin: spacings.large
     },
     imageContainer: {
         flexDirection: 'row',
@@ -717,6 +750,20 @@ const styles = StyleSheet.create({
         fontSize: style.fontSizeNormal.fontSize,
         fontWeight: style.fontWeightThin1x.fontWeight,
         marginLeft: spacings.large
+    },
+    imageBox: {
+        width: wp(9),
+        height: wp(9),
+        borderRadius: 5,
+        margin: spacings.large
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
     },
 
 

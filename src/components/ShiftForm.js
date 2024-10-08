@@ -29,7 +29,7 @@ const ShiftForm = ({ from }) => {
               <ModalDropdownComponent
                 options={['User 1', 'User 2']}
                 onSelect={(index, value) => setSelectedUser(value)}
-                optionBoxStyle={styles.dropdownStyle}
+                optionBoxStyle={[styles.dropdownStyle, { width: wp(17) }]}
               />
             </View>
 
@@ -80,12 +80,12 @@ const ShiftForm = ({ from }) => {
               )}
             </View>
 
-            <View style={{ width: wp(17) }}>
+            <View style={{ width: wp(17)}}>
               <Text style={styles.label}>Shift Type</Text>
               <ModalDropdownComponent
                 options={['Type 1', 'Type 2']}
                 onSelect={(index, value) => setShiftType(value)}
-                optionBoxStyle={styles.dropdownStyle}
+                optionBoxStyle={[styles.dropdownStyle, { width: wp(17)}]}
               />
             </View>
             <View style={{ width: wp(17) }}>
@@ -106,6 +106,7 @@ const ShiftForm = ({ from }) => {
               <ModalDropdownComponent
                 options={['User 1', 'User 2']}
                 onSelect={(index, value) => setSelectedUser(value)}
+                optionBoxStyle={[styles.dropdownStyle, { width: wp(19.5) }]}
               />
             </View>
 
@@ -137,6 +138,7 @@ const ShiftForm = ({ from }) => {
               <ModalDropdownComponent
                 options={['User 1', 'User 2']}
                 onSelect={(index, value) => setSelectedUser(value)}
+                optionBoxStyle={[styles.dropdownStyle, { width: wp(19.5) }]}
               />
             </View>
 
@@ -169,6 +171,7 @@ const ShiftForm = ({ from }) => {
               <ModalDropdownComponent
                 options={['Type 1', 'Type 2']}
                 onSelect={(index, value) => setShiftType(value)}
+                optionBoxStyle={[styles.dropdownStyle, { width: wp(19.5) }]}
               />
             </View>
 
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: lightGrayOpacityColor,
     borderRadius: 5,
-    width: wp(17),
+    // width: wp(17),
     height: "auto"
   },
 });

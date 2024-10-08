@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, ScrollView, FlatList } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, ScrollView, FlatList, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import ModalDropdownComponent from './ModalDropdownComponent';
-import { ADD_IMAGE_ICON, CALENDER_ICON, CHECK_ICON, CLOSE_BLACK_ICON, DOLLAR_ICON, HASH_ICON, TIMER_ICON } from '../assests/images';
+import { ADD_IMAGE_ICON, CALENDER_ICON, CHECK_ICON, CLOSE_BLACK_ICON, DELETE_ICON, DOLLAR_ICON, HASH_ICON, TIMER_ICON } from '../assests/images';
 import { spacings, style } from '../constant/Fonts';
 import { blackColor, lightGrayOpacityColor, whiteColor } from '../constant/Colors';
 import CustomTextInput from './CustomeTextInput';
@@ -12,8 +12,8 @@ import Button from './Button';
 import { ADD_IMAGE, PHOTOS } from '../constant/Constant';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
+import { launchImageLibrary } from 'react-native-image-picker';
+const OperatorDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
     const [selectedSupplier, setSelectedSupplier] = useState('');
     const [selectedResources, setSelectedResources] = useState('');
     const [selectedActivity, setSelectedActivity] = useState('');
@@ -42,13 +42,42 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
         setIsChecked(!isChecked);
     };
 
+    const handleAddImage = async () => {
+        // Check for an available slot
+        const emptyIndex = images.findIndex((img) => img === null);
+        if (emptyIndex === -1) {
+            Alert.alert("Limit reached", "You can only add up to 3 images.");
+            return;
+        }
+
+        // Launch the image picker
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            includeBase64: false, // Change based on your requirements
+            quality: 1,
+        });
+
+        if (result.didCancel) {
+            console.log('User cancelled image picker');
+        } else if (result.error) {
+            console.error('ImagePicker Error: ', result.error);
+        } else {
+            const source = result.assets[0].uri; // Get the selected image URI
+            const newImages = [...images];
+            newImages[emptyIndex] = source;
+            console.log(newImages)// Add the image to the first available slot
+            setImages(newImages); // Update the state
+        }
+    };
+
     const renderItem = ({ item }) => (
         <View style={styles.row}>
             <Text style={[styles.cell, { paddingVertical: 10, textAlign: "center", borderWidth: 1, }]}>{item.attachment}</Text>
             <Text style={[styles.cell, { paddingVertical: 10, textAlign: "center", borderWidth: 1, }]}>{item.unit}</Text>
             <Text style={[styles.cell, { textAlign: "center", paddingVertical: 10, borderWidth: 1, }]}>{item.amount}</Text>
             <TouchableOpacity>
-                <Text style={[styles.cell, { textAlign: "center", paddingVertical: 10, borderWidth: 1, }]}>🗑️</Text>
+                <Image source={DELETE_ICON} style={[{ width: wp(3), height: hp(3), padding: spacings.xxxxLarge }]} />
+                {/* <Text style={[styles.cell, { textAlign: "center", paddingVertical: 10, borderWidth: 1, }]}>🗑️</Text> */}
             </TouchableOpacity>
         </View>
     );
@@ -169,7 +198,7 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
                             <ModalDropdownComponent
                                 options={['Supplier 1', 'Supplier2']}
                                 onSelect={(itemValue) => setSelectedLineItem(itemValue)}
-                                optionBoxStyle={styles.dropdownStyle}
+                                optionBoxStyle={[styles.dropdownStyle,{width:wp(22)}]}
                             />
                         </View>
                     </View>
@@ -180,7 +209,7 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
                             <ModalDropdownComponent
                                 options={['Supplier 1', 'Supplier2']}
                                 onSelect={(itemValue) => setSelectedDuration(itemValue)}
-                                optionBoxStyle={styles.dropdownStyle}
+                                optionBoxStyle={[styles.dropdownStyle,{width:wp(12)}]}
                             />
                         </View>
 
@@ -210,7 +239,7 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
                             <ModalDropdownComponent
                                 options={['Supplier 1', 'Supplier2']}
                                 onSelect={(itemValue) => setSelecteAttachments(itemValue)}
-                                optionBoxStyle={styles.dropdownStyle}
+                                optionBoxStyle={[styles.dropdownStyle,{width:wp(22)}]}
                             />
                         </View>
                     </View>
@@ -349,7 +378,7 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
                             <ModalDropdownComponent
                                 options={['Supplier 1', 'Supplier2']}
                                 onSelect={(itemValue) => setSelectedBreakDuration(itemValue)}
-                                optionBoxStyle={[styles.dropdownStyle, { width: wp(15) }]}
+                                optionBoxStyle={[styles.dropdownStyle,{width:wp(24)}]}
                             />
                         </View>
 
@@ -397,7 +426,7 @@ const OperatorDocket = ({ visible, onClose, onAdd,hideBUtton }) => {
                             buttonStyle={styles.buttonStyle}
                             buttonTextStyle={styles.buttonTextStyle}
                             imageSource={ADD_IMAGE_ICON}
-
+                            onPress={handleAddImage}
                         />
                     </View>
                 </View>
@@ -534,7 +563,7 @@ const styles = StyleSheet.create({
         // backgroundColor: '#D9D9D9',
         // borderColor: '#aaa',
         // borderWidth: 1,
-        marginHorizontal: spacings.large
+        margin: spacings.large
     },
     dropdownStyle: {
         backgroundColor: whiteColor,
@@ -543,6 +572,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: wp(48),
         height: "auto"
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
     },
 });
 

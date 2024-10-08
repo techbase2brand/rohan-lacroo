@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, ScrollView } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ADD_IMAGE_ICON, CALENDER_ICON, CHECK_ICON, CLOSE_BLACK_ICON, DOLLAR_ICON, HASH_ICON } from '../assests/images';
@@ -10,7 +10,7 @@ import { spacings, style } from '../constant/Fonts';
 import { blackColor, lightGrayOpacityColor, whiteColor } from '../constant/Colors';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../utils';
 import Button from './Button';
-
+import { launchImageLibrary } from 'react-native-image-picker';
 
 const LabourDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
     const [selectedSupplier, setSelectedSupplier] = useState('');
@@ -19,6 +19,7 @@ const LabourDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
     const [selectedOrder, setSelectedOrder] = useState('');
     const [selectedUnit, setSelectedUnit] = useState('');
     const [selectedIssue, setSelectedIssue] = useState('');
+    const [BreakDuration, setBreakDuration] = useState('');
     const [startTimePicker, setStartTimePicker] = useState(false);
     const [finisTimePicker, setFinishTimePicker] = useState(false);
     const [breakStartTimePicker, setBreakStartTimePicker] = useState(false);
@@ -26,6 +27,33 @@ const LabourDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
     const [finisDateTime, setFinishDateTime] = useState(new Date());
     const [breakDateTime, setBreakDateTime] = useState(new Date());
     const [images, setImages] = useState(Array(3).fill(null));
+    const handleAddImage = async () => {
+        // Check for an available slot
+        const emptyIndex = images.findIndex((img) => img === null);
+        if (emptyIndex === -1) {
+            Alert.alert("Limit reached", "You can only add up to 3 images.");
+            return;
+        }
+
+        // Launch the image picker
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            includeBase64: false, // Change based on your requirements
+            quality: 1,
+        });
+
+        if (result.didCancel) {
+            console.log('User cancelled image picker');
+        } else if (result.error) {
+            console.error('ImagePicker Error: ', result.error);
+        } else {
+            const source = result.assets[0].uri; // Get the selected image URI
+            const newImages = [...images];
+            newImages[emptyIndex] = source;
+            console.log(newImages)// Add the image to the first available slot
+            setImages(newImages); // Update the state
+        }
+    };
     return (
         <View>
             <ScrollView showsVerticalScrollIndicator={false} style={{ marginBottom: hideBUtton ? 110 : 90 }} >
@@ -207,8 +235,8 @@ const LabourDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
                         <View style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 5, marginTop: 10 }}>
                             <ModalDropdownComponent
                                 options={['Resource1', 'Resource2']}
-                                onSelect={(itemValue) => setSelectedUser(itemValue)}
-                                optionBoxStyle={styles.dropdownStyle}
+                                onSelect={(itemValue) => setBreakDuration(itemValue)}
+                                optionBoxStyle={[styles.dropdownStyle,{width:wp(24)}]}
                             />
                         </View>
 
@@ -257,7 +285,7 @@ const LabourDocket = ({ visible, onClose, onAdd, hideBUtton }) => {
                             buttonStyle={styles.buttonStyle}
                             buttonTextStyle={styles.buttonTextStyle}
                             imageSource={ADD_IMAGE_ICON}
-
+                            onPress={handleAddImage}
                         />
                     </View>
                 </View>
@@ -366,7 +394,7 @@ const styles = StyleSheet.create({
         width: wp(9),
         height: wp(9),
         borderRadius: 5,
-        marginHorizontal: spacings.large
+        margin: spacings.large
     },
     dropdownStyle: {
         backgroundColor: whiteColor,
@@ -375,6 +403,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: wp(48),
         height: "auto"
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
     },
 });
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from './src/utils';
 import { BaseStyle } from './src/constant/Style';
@@ -9,6 +9,9 @@ import PreStartMainScreen from './src/screens/prestart/PreStartMainScreen';
 import CreatePrestartScreen from './src/screens/prestart/CreatePrestartScreen';
 import DairyMainScreen from './src/screens/Dairy/DairyMainScreen';
 import CreateDailyDiary from './src/screens/Dairy/CreateDailyDiary';
+import withNetInfo from './src/components/withNetInfo';
+import Orientation from 'react-native-orientation-locker';
+
 
 const { flex, alignItemsCenter, justifyContentCenter } = BaseStyle;
 const Stack = createStackNavigator();
@@ -25,6 +28,15 @@ const AuthNavigator = () => {
 };
 
 const App = () => {
+
+  useEffect(() => {
+    Orientation.lockToLandscape();
+
+    // Optional: Unlock on component unmount
+    return () => {
+        Orientation.unlockAllOrientations();
+    };
+}, []);
   return (
     <NavigationContainer>
       <SafeAreaView style={styles.safeArea}>
@@ -48,5 +60,5 @@ const styles = StyleSheet.create({
   }
 });
 
-export default App;
+export default withNetInfo(App);
 

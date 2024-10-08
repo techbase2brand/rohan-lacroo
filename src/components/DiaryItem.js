@@ -7,9 +7,14 @@ import { black, blackColor, blueColor, green, lightGreenColor, lightShadeBlue, r
 import Feather from 'react-native-vector-icons/dist/Feather';
 import EditDocketModal from './modal/EditDocketModal';
 import EditOperatorModal from './modal/EditOperatorModal';
+import DeleteModal from './modal/DeleteModal';
 
-const DiaryItem = ({ data, from }) => {
-    const [editLabour, setEditLabour] = useState(false)
+const DiaryItem = ({ data, from, onDeleteFile }) => {
+    const [editLabour, setEditLabour] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteModalFrom, setDeleteModalFrom] = useState("");
+    const [deleteDate, setDeleteDate] = useState("");
+    const [deleteIndex, setDeleteIndex] = useState(null);
 
     const onEditLabourDocket = () => {
         setEditLabour(true)
@@ -20,8 +25,25 @@ const DiaryItem = ({ data, from }) => {
     const onSaveLabourDocket = () => {
         setEditLabour(false)
     }
-    
-    const renderItem = ({ item }) => (
+
+
+    const openModal = (index) => {
+        setDeleteIndex(index);
+        setDeleteModalVisible(true);
+    };
+
+    const closeModal = () => {
+        setDeleteModalVisible(false);
+    };
+
+    const handleDelete = () => {
+        if (from === "Files" && deleteIndex !== null) {
+            onDeleteFile(deleteIndex);
+        }
+        setDeleteModalVisible(false);
+    };
+
+    const renderItem = ({ item, index }) => (
         <View style={styles.prestartBox}>
             {from === "Diary" && <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor }]}>
                 <View style={[styles.dateBox]}>
@@ -74,7 +96,7 @@ const DiaryItem = ({ data, from }) => {
                     <TouchableOpacity>
                         <Image source={COPY_FILE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => { openModal(), setDeleteModalFrom("Diary"), setDeleteDate(item?.DATE) }}>
                         <Image source={DELETE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
                 </View>
@@ -153,10 +175,10 @@ const DiaryItem = ({ data, from }) => {
             </View>}
             {from === "Files" && <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor }]}>
                 <View style={[{ width: "95%", justifyContent: "center" }]}>
-                    <Text style={styles.text}>{item.fileName}</Text>
+                    <Text style={styles.text}>{item.name}</Text>
                 </View>
                 <View style={[{ width: wp(4), justifyContent: "center", alignItems: "center" }]}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => { openModal(index), setDeleteModalFrom("Files") }}>
                         <Image source={DELETE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
                 </View>
@@ -221,7 +243,7 @@ const DiaryItem = ({ data, from }) => {
                 <View style={[{ width: wp(32), justifyContent: "center" }]}>
                     <Text style={{ fontSize: 14, color: '#475467' }}>{item.ISSUE_DESCRIPTION}</Text>
                 </View>
-                <View style={[{ width: wp(9), alignItems: "center", justifyContent: "center" }]}>
+                <View style={[{ width: wp(9), alignItems: "center", justifyContent: "center" }]} onPress={() => onDeleteFile(index)}>
                     <Image source={EDIT_ICON} style={{ width: 13, height: 15, resizeMode: "contain" }} />
                 </View>
             </View>}
@@ -230,19 +252,32 @@ const DiaryItem = ({ data, from }) => {
 
     return (
         <>
-            <FlatList
-                data={data}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => index.toString()}
-            />
+            {from === "Files" && data.length === 0 ? (
+                <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor, alignItems: "center", justifyContent: "center" }]}>
+                    <Text style={styles.text}>No files available</Text>
+                </View >
+            ) : (
+                <FlatList
+                    data={data}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+            )}
             {editLabour &&
-                <EditDocketModal 
-                onSplit={onSplitLabourDocket}
-                onSave={onSaveLabourDocket}/>
+                <EditDocketModal
+                    onSplit={onSplitLabourDocket}
+                    onSave={onSaveLabourDocket} />
             }
-            {/* {
-                <EditOperatorModal />
-            } */}
+            {
+                deleteModalVisible && (
+                    <DeleteModal
+                        visible={deleteModalVisible}
+                        onClose={closeModal}
+                        onDelete={handleDelete}
+                        from={deleteModalFrom}
+                        date={deleteDate}
+                    />)
+            }
         </>
     );
 };

@@ -1,5 +1,5 @@
-import { FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import { Alert, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../../utils';
 import { BaseStyle } from '../../constant/Style';
@@ -16,10 +16,22 @@ import PreStartItem from '../../components/PreStartItem';
 import CustomTextInput from '../../components/CustomeTextInput';
 import AddActivityModal from '../../components/modal/AddActivityModal';
 import AddResourceModal from '../../components/modal/AddResourceModal';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import Geolocation from 'react-native-geolocation-service';
+import DocumentPicker from 'react-native-document-picker';
 const { flex, alignItemsCenter, justifyContentCenter, alignJustifyCenter, flexDirectionRow, justifyContentSpaceEvenly } = BaseStyle;
 const CreatePrestartScreen = ({ navigation }) => {
     const [activityModalVisible, setActivityModalVisible] = useState(false);
-    const [resourcesModalVisible, setResourcesModalVisible] = useState(false)
+    const [resourcesModalVisible, setResourcesModalVisible] = useState(false);
+    const [location, setLocation] = useState(null);
+    const [images, setImages] = useState(Array(10).fill(null));
+    const [files, setFiles] = useState([]);
+
+    useEffect(() => {
+        requestLocationPermission()
+        checkLocationPermission();
+    }, []);
+
     const weatherData = [
         { id: '1', temperature: 10, condition: 'Overcast Clouds', time: '6 AM' },
         { id: '2', temperature: 15, condition: 'Clear Sky', time: '9 AM' },
@@ -75,16 +87,56 @@ const CreatePrestartScreen = ({ navigation }) => {
             TARGET_RATE: "5",
         },
     ];
-    const fileData = [
-        {
-            fileName: "File Name.doc"
-        },
-        {
-            fileName: "File Name.csv"
-        }
-    ]
+    // const fileData = [
+    //     {
+    //         fileName: "File Name.doc"
+    //     },
+    //     {
+    //         fileName: "File Name.csv"
+    //     }
+    // ]
 
-    const [images, setImages] = useState(Array(10).fill(null)); // Initialize an array for 10 image slots
+    const checkLocationPermission = async () => {
+        const result = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+        switch (result) {
+            case RESULTS.UNAVAILABLE:
+                console.log('Location permission is not available on this device');
+                break;
+            case RESULTS.DENIED:
+                console.log('Location permission has not been requested yet');
+                break;
+            case RESULTS.GRANTED:
+                console.log('Location permission is granted');
+                getCurrentLocation();
+                break;
+            case RESULTS.BLOCKED:
+                console.log('Location permission is blocked');
+                break;
+        }
+    };
+
+    const requestLocationPermission = async () => {
+        const result = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+        if (result === RESULTS.GRANTED) {
+            console.log('Location permission granted');
+            getCurrentLocation();
+        } else {
+            console.log('Location permission denied');
+        }
+    };
+
+    const getCurrentLocation = () => {
+        Geolocation.getCurrentPosition(
+            (position) => {
+                console.log(position);
+                // You can access position.coords.latitude and position.coords.longitude here
+            },
+            (error) => {
+                console.error(error);
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+    };
 
     const handleAddImage = async () => {
         // Check for an available slot
@@ -108,9 +160,40 @@ const CreatePrestartScreen = ({ navigation }) => {
         } else {
             const source = result.assets[0].uri; // Get the selected image URI
             const newImages = [...images];
-            newImages[emptyIndex] = source; // Add the image to the first available slot
+            newImages[emptyIndex] = source;
             setImages(newImages); // Update the state
         }
+    };
+
+    const handleAddFile = async () => {
+        try {
+            const res = await DocumentPicker.pick({
+                type: [DocumentPicker.types.allFiles],
+            });
+
+            // Log the entire response
+            console.log('DocumentPicker Response:', res);
+
+            // Extracting the uri from the first object in the array
+            const fileUri = res[0].fileCopyUri || res[0].uri; // Accessing the first item in the array
+            console.log('Picked file URI:', fileUri); // This should now show the correct URI
+
+            if (fileUri) {
+                setFiles((prevFiles) => [...prevFiles, { name: res[0].name, uri: fileUri }]);
+            } else {
+                console.error('File URI is undefined');
+            }
+        } catch (err) {
+            if (DocumentPicker.isCancel(err)) {
+                console.log('User cancelled the picker');
+            } else {
+                console.error('Error picking file:', err);
+            }
+        }
+    };
+
+    const deleteFile = (index) => {
+        setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     };
 
     const openActivityModal = () => {
@@ -147,7 +230,7 @@ const CreatePrestartScreen = ({ navigation }) => {
         <View style={[flex, flexDirectionRow]}>
             <SideMenu />
             <View style={styles.container}>
-                <ScrollView style={{ marginBottom: 100 }} showsVerticalScrollIndicator={false}>
+                <ScrollView style={{ marginBottom: hp(15) }} showsVerticalScrollIndicator={false}>
                     <Header screenRouteName={PRESTART} screenName={CREATE_PRESTART} showRoute={true} navigation={navigation} />
                     <View style={styles.prestartBox}>
                         <View style={styles.line}></View>
@@ -270,20 +353,23 @@ const CreatePrestartScreen = ({ navigation }) => {
                                     buttonStyle={styles.buttonStyle}
                                     buttonTextStyle={styles.buttonTextStyle}
                                     imageSource={ADD_IMAGE_ICON}
-
+                                    onPress={handleAddImage}
                                 />
                             </View>
                         </View>
                         <View style={styles.imageContainer}>
-                            {images.map((img, index) => (
-                                <View key={index} style={styles.imageBox}>
-                                    {img ? (
-                                        <Image source={{ uri: img }} style={styles.image} />
-                                    ) : (
-                                        <View style={styles.placeholderBox} />
-                                    )}
-                                </View>
-                            ))}
+                            {images.map((img, index) => {
+                                return (
+                                    <View key={index} style={styles.imageBox}>
+                                        {img ? (
+                                            <Image source={{ uri: img }} style={styles.image} />
+                                        ) : (
+                                            <View style={styles.placeholderBox} />
+                                        )}
+                                    </View>
+                                );
+                            })}
+
                         </View>
                         <View style={[styles.line, { marginVertical: spacings.Large1x }]}></View>
                         <View style={[{ width: "100%", height: hp(6), marginBottom: spacings.large }, justifyContentSpaceEvenly, flexDirectionRow]}>
@@ -296,6 +382,7 @@ const CreatePrestartScreen = ({ navigation }) => {
                                     buttonStyle={styles.buttonStyle}
                                     buttonTextStyle={styles.buttonTextStyle}
                                     imageSource={ADD_FILE_BLACK_ICON}
+                                    onPress={handleAddFile}
 
                                 />
                             </View>
@@ -305,7 +392,7 @@ const CreatePrestartScreen = ({ navigation }) => {
                                 <Text style={styles.text}>{FILE_NAME}</Text>
                             </View>
                         </View>
-                        <PreStartItem data={fileData} from={"Files"} />
+                        <PreStartItem data={files} from={"Files"} onDeleteFile={deleteFile}/>
                     </View>
                 </ScrollView>
                 <View style={{ width: wp(95), height: hp(10), position: "absolute", bottom: 30, flexDirection: "row", justifyContent: "space-evenly", alignItems: "center", paddingVertical: spacings.large, backgroundColor: "#fff" }}>
@@ -403,7 +490,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#D9D9D9',
         borderColor: '#aaa',
         borderWidth: 1,
-        margin: spacings.large
+        // margin: spacings.large
     },
     imageContainer: {
         flexDirection: 'row',
@@ -430,7 +517,19 @@ const styles = StyleSheet.create({
         fontWeight: style.fontWeightThin1x.fontWeight,
         marginLeft: spacings.large
     },
-
-
+    imageBox: {
+        width: wp(9),
+        height: wp(9),
+        borderRadius: 5,
+        margin: spacings.large
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
+    },
 })
 export default CreatePrestartScreen;

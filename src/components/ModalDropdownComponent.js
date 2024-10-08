@@ -17,8 +17,8 @@ const ModalDropdownComponent = ({ options = [], onSelect, optionBoxStyle }) => {
       style={[styles.dropdown, borderRadius5]}
       textStyle={styles.dropdownText}
       defaultTextStyle={{ color: lightGrayColor }}
-      dropdownTextStyle={styles.dropdownText}
-      dropdownStyle={optionBoxStyle ? optionBoxStyle : styles.dropdownStyle}
+      dropdownTextStyle={optionBoxStyle ? optionBoxStyle :styles.dropdownText}
+      // dropdownStyle={optionBoxStyle ? optionBoxStyle : styles.dropdownStyle}
       renderRightComponent={() => (
         <Feather
           name="chevron-down"
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e0e0e0',
     paddingVertical: spacings.normal,
-    width: "100%",
+    // width: "100%",
     backgroundColor: whiteColor
   },
   dropdownText: {
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: lightGrayOpacityColor,
     borderRadius: 5,
-    width: wp(20),
+    // width: "100%",
     height: "auto"
   },
 });

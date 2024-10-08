@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, FlatList } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, FlatList, Alert } from 'react-native';
 import { ADD_FILE_BLACK_ICON, ADD_IMAGE_ICON, CHECK_ICON, CLOSE_BLACK_ICON, DELETE_ICON, SEARCH_ICON } from '../../assests/images';
 import ModalDropdownComponent from '../ModalDropdownComponent';
 import { spacings, style } from '../../constant/Fonts';
@@ -7,6 +7,7 @@ import { blackColor, lightGrayOpacityColor, whiteColor } from '../../constant/Co
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../../utils';
 import { ADD_IMAGE, PHOTOS } from '../../constant/Constant';
 import Button from '../Button';
+import { launchImageLibrary } from 'react-native-image-picker';
 const TableRow = ({ item }) => {
     return (
         <View style={styles.row}>
@@ -31,6 +32,34 @@ const SubcontractorDocketModal = ({ visible, onClose, onAdd }) => {
         { id: '2', name: 'Item 2', costCode: '002', qty: 1, rate: 150, amount: 150 },
         { id: '3', name: 'Item 3', costCode: '003', qty: 3, rate: 120, amount: 360 },
     ];
+
+    const handleAddImage = async () => {
+        // Check for an available slot
+        const emptyIndex = images.findIndex((img) => img === null);
+        if (emptyIndex === -1) {
+            Alert.alert("Limit reached", "You can only add up to 3 images.");
+            return;
+        }
+
+        // Launch the image picker
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            includeBase64: false, // Change based on your requirements
+            quality: 1,
+        });
+
+        if (result.didCancel) {
+            console.log('User cancelled image picker');
+        } else if (result.error) {
+            console.error('ImagePicker Error: ', result.error);
+        } else {
+            const source = result.assets[0].uri; // Get the selected image URI
+            const newImages = [...images];
+            newImages[emptyIndex] = source;
+            console.log(newImages)// Add the image to the first available slot
+            setImages(newImages); // Update the state
+        }
+    };
 
     return (
         <Modal
@@ -163,6 +192,7 @@ const SubcontractorDocketModal = ({ visible, onClose, onAdd }) => {
                                 buttonStyle={styles.buttonStyle}
                                 buttonTextStyle={styles.buttonTextStyle}
                                 imageSource={ADD_IMAGE_ICON}
+                                onPress={handleAddImage}
 
                             />
                         </View>
@@ -324,7 +354,7 @@ const styles = StyleSheet.create({
         width: wp(9),
         height: wp(9),
         borderRadius: 5,
-        marginHorizontal: spacings.large
+        margin: spacings.large
     },
     dropdownStyle: {
         backgroundColor: whiteColor,
@@ -333,6 +363,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: wp(73),
         height: "auto"
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
     },
 });
 

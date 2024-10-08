@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
+import { View, Text, Modal, TouchableOpacity, StyleSheet, Image, TextInput, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { ADD_FILE_BLACK_ICON, ADD_IMAGE_ICON, CHECK_ICON, CLOSE_BLACK_ICON, DOLLAR_ICON, HASH_ICON } from '../../assests/images';
 import ModalDropdownComponent from '../ModalDropdownComponent';
@@ -9,10 +9,38 @@ import { spacings, style } from '../../constant/Fonts';
 import { blackColor, lightGrayOpacityColor, whiteColor } from '../../constant/Colors';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../../utils';
 import { ScrollView } from 'react-native-gesture-handler';
+import { launchImageLibrary } from 'react-native-image-picker';
 const MaterialReceiptModal = ({ visible, onClose, onAdd }) => {
     const [supplier, setSupplier] = useState('');
     const [materialItem, setMaterialItem] = useState('');
     const [images, setImages] = useState(Array(3).fill(null));
+    const handleAddImage = async () => {
+        // Check for an available slot
+        const emptyIndex = images.findIndex((img) => img === null);
+        if (emptyIndex === -1) {
+            Alert.alert("Limit reached", "You can only add up to 3 images.");
+            return;
+        }
+
+        // Launch the image picker
+        const result = await launchImageLibrary({
+            mediaType: 'photo',
+            includeBase64: false, // Change based on your requirements
+            quality: 1,
+        });
+
+        if (result.didCancel) {
+            console.log('User cancelled image picker');
+        } else if (result.error) {
+            console.error('ImagePicker Error: ', result.error);
+        } else {
+            const source = result.assets[0].uri; // Get the selected image URI
+            const newImages = [...images];
+            newImages[emptyIndex] = source;
+            console.log(newImages)// Add the image to the first available slot
+            setImages(newImages); // Update the state
+        }
+    };
     return (
         <Modal
             animationType="slide"
@@ -122,7 +150,7 @@ const MaterialReceiptModal = ({ visible, onClose, onAdd }) => {
                                 <TextInput
                                     style={styles.input}
                                     placeholder="2500"
-                                    // editable={false}
+                                // editable={false}
                                 />
                             </View>
 
@@ -138,7 +166,7 @@ const MaterialReceiptModal = ({ visible, onClose, onAdd }) => {
                                     buttonStyle={styles.buttonStyle}
                                     buttonTextStyle={styles.buttonTextStyle}
                                     imageSource={ADD_IMAGE_ICON}
-
+                                    onPress={handleAddImage}
                                 />
                             </View>
                         </View>
@@ -264,7 +292,7 @@ const styles = StyleSheet.create({
         width: wp(9),
         height: wp(9),
         borderRadius: 5,
-        marginHorizontal: spacings.large
+        margin: spacings.large
     },
     dropdownStyle: {
         backgroundColor: whiteColor,
@@ -273,6 +301,14 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: wp(46),
         height: "auto"
+    },
+    image: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
+        borderRadius: 5,
+        borderColor: '#aaa',
+        borderWidth: 1,
     },
 });
 

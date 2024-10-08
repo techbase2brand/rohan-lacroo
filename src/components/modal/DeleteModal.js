@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { DELETE_ICON, LEFT_ARROW_ICON } from '../../assests/images';
+import { DELETE_ICON, LEFT_ARROW_ICON, WHITE_DELETE_ICON } from '../../assests/images';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from '../../utils';
 
-const DeleteModal = ({ visible, onClose, onDelete, from }) => {
+const DeleteModal = ({ visible, onClose, onDelete, from, date }) => {
     return (
         <Modal
             animationType="slide"
@@ -16,8 +16,14 @@ const DeleteModal = ({ visible, onClose, onDelete, from }) => {
                     <View style={styles.ModalHeader}>
                         <Image source={DELETE_ICON} style={{ width: hp(8), height: hp(8), resizeMode: "contain" }} />
                         <View >
-                            <Text style={styles.modalText}>Delete 10 July, 2023 {from}?</Text>
-                            <Text style={[styles.modalText, { fontSize: 14, fontWeight: "400" }]}>This action cannot be reversed</Text>
+                            {from === "Files" ? <>
+                                <Text style={styles.modalText}>Are you sure you want to delete this file?</Text>
+                                <Text style={[styles.modalText, { fontSize: 14, fontWeight: "400" }]}>This action cannot be reversed</Text>
+                            </> :
+                                <>
+                                    <Text style={styles.modalText}>Delete {date ? date : "10 July, 2023"} {from}?</Text>
+                                    <Text style={[styles.modalText, { fontSize: 14, fontWeight: "400" }]}>This action cannot be reversed</Text>
+                                </>}
                         </View>
 
                     </View>
@@ -27,8 +33,8 @@ const DeleteModal = ({ visible, onClose, onDelete, from }) => {
                             <Text style={[styles.buttonText, { color: "#b42318" }]}>Cancel</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={[styles.button, { backgroundColor: '#d92d20', flexDirection: "row", justifyContent: "center", alignItems: "center" }]} onPress={onDelete}>
-                            <Image source={DELETE_ICON} style={{ width: 30, height: 30, marginRight: 4 }} />
-                            <Text style={styles.buttonText}>Delete Prestart</Text>
+                            <Image source={WHITE_DELETE_ICON} style={{ width: 20, height: 20, marginRight: 4,resizeMode:"contain" }} />
+                            <Text style={styles.buttonText}>Delete {from}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

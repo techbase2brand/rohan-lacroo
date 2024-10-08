@@ -26,3 +26,4 @@ export const CALENDER_ICON = require('./calendar.png');
 export const SPLIT_DOCKET_ICON = require('./splitDocket.png');
 export const TIMER_ICON = require('./timer.png');
 export const SEARCH_ICON = require('./search-lg.png');
+export const WHITE_DELETE_ICON = require('./whiteDeteleButton.png');

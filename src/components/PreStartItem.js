@@ -6,10 +6,13 @@ import { spacings } from '../constant/Fonts';
 import { black, blackColor, whiteColor } from '../constant/Colors';
 import DeleteModal from './modal/DeleteModal';
 
-const PreStartItem = ({ data, from }) => {
+const PreStartItem = ({ data, from, onDeleteFile }) => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [deleteModalFrom, setDeleteModalFrom] = useState("");
-    const openModal = () => {
+    const [deleteDate, setDeleteDate] = useState("");
+    const [deleteIndex, setDeleteIndex] = useState(null);
+    const openModal = (index) => {
+        setDeleteIndex(index);
         setDeleteModalVisible(true);
     };
 
@@ -18,9 +21,12 @@ const PreStartItem = ({ data, from }) => {
     };
 
     const handleDelete = () => {
+        if (from === "Files" && deleteIndex !== null) {
+            onDeleteFile(deleteIndex);
+        }
         setDeleteModalVisible(false);
     };
-    const renderItem = ({ item }) => (
+    const renderItem = ({ item, index }) => (
         <View style={styles.prestartBox}>
             {from === "PreStart" && <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor }]}>
                 <View style={[styles.dateBox]}>
@@ -39,7 +45,7 @@ const PreStartItem = ({ data, from }) => {
                     <TouchableOpacity>
                         <Image source={COPY_FILE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => { openModal(), setDeleteModalFrom("PreStart") }}>
+                    <TouchableOpacity onPress={() => { openModal(), setDeleteModalFrom("PreStart"), setDeleteDate(item?.DATE) }}>
                         <Image source={DELETE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
                 </View>
@@ -93,10 +99,12 @@ const PreStartItem = ({ data, from }) => {
             </View>}
             {from === "Files" && <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor }]}>
                 <View style={[{ width: "95%", justifyContent: "center" }]}>
-                    <Text style={styles.text}>{item.fileName}</Text>
+                    <Text style={styles.text}>{item.name}</Text>
                 </View>
                 <View style={[{ width: wp(4), justifyContent: "center", alignItems: "center" }]}>
-                    <TouchableOpacity onPress={() => { openModal(), setDeleteModalFrom("Files") }}>
+                    <TouchableOpacity
+                        // onPress={() => onDeleteFile(index)}
+                        onPress={() => { openModal(index), setDeleteModalFrom("Files") }}>
                         <Image source={DELETE_ICON} style={[{ width: wp(3), height: hp(3) }]} />
                     </TouchableOpacity>
                 </View>
@@ -107,11 +115,17 @@ const PreStartItem = ({ data, from }) => {
 
     return (
         <>
-            <FlatList
-                data={data}
-                renderItem={renderItem}
-                keyExtractor={(item, index) => index.toString()}
-            />
+            {from === "Files" && data.length === 0 ? (
+                <View style={[{ width: "100%", height: hp(5), flexDirection: "row", borderWidth: .5, borderColor: "#EAECF0", backgroundColor: whiteColor, alignItems: "center", justifyContent: "center" }]}>
+                    <Text style={styles.text}>No files available</Text>
+                </View >
+            ) : (
+                <FlatList
+                    data={data}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => index.toString()}
+                />
+            )}
             {
                 deleteModalVisible && (
                     <DeleteModal
@@ -119,6 +133,7 @@ const PreStartItem = ({ data, from }) => {
                         onClose={closeModal}
                         onDelete={handleDelete}
                         from={deleteModalFrom}
+                        date={deleteDate}
                     />)
             }
         </>
